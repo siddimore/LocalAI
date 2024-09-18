@@ -2419,7 +2419,7 @@ public:
     }
 
     grpc::Status BackendServiceImpl::GetMetrics(ServerContext* context, const backend::HealthMessage* request, backend::MetricsResponse* response) {
-        llama_client_slot* active_slot = llama_server_context.get_active_slot();
+        llama_client_slot* active_slot = llama.get_active_slot();
 
         if (active_slot != nullptr) {
             // Calculate the tokens per second using existing logic
