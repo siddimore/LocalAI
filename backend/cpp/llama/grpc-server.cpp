@@ -2418,7 +2418,7 @@ public:
         return grpc::Status::OK;
     }
 
-    grpc::Status BackendServiceImpl::GetMetrics(ServerContext* context, const backend::HealthMessage* request, backend::MetricsResponse* response) {
+    grpc::Status GetMetrics(ServerContext* context, const backend::HealthMessage* request, backend::MetricsResponse* response) {
         llama_client_slot* active_slot = llama.get_active_slot();
 
         if (active_slot != nullptr) {
