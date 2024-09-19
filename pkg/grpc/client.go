@@ -50,7 +50,7 @@ func (c *Client) wdUnMark() {
 	}
 }
 
-func (c *Client) GetMetrics(ctx context.Context) (*pb.MetricsResponse, error) {
+func (c *Client) GetTokenMetrics(ctx context.Context) (*pb.MetricsResponse, error) {
 	if !c.parallel {
 		c.opMutex.Lock()
 		defer c.opMutex.Unlock()

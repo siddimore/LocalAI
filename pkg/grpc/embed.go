@@ -23,6 +23,10 @@ func (e *embedBackend) HealthCheck(ctx context.Context) (bool, error) {
 	return true, nil
 }
 
+func (e *embedBackend) GetTokenMetrics(ctx context.Context) (*pb.MetricsResponse, error) {
+	return e.s.GetMetrics(ctx, &pb.HealthMessage{})
+}
+
 func (e *embedBackend) Embeddings(ctx context.Context, in *pb.PredictOptions, opts ...grpc.CallOption) (*pb.EmbeddingResult, error) {
 	return e.s.Embedding(ctx, in)
 }
