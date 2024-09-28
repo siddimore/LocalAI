@@ -50,6 +50,32 @@ func (c *Client) wdUnMark() {
 	}
 }
 
+func (c *Client) GetTokenMetrics(ctx context.Context) (*pb.MetricsResponse, error) {
+	if !c.parallel {
+		c.opMutex.Lock()
+		defer c.opMutex.Unlock()
+	}
+	c.setBusy(true)
+	defer c.setBusy(false)
+	conn, err := grpc.Dial(c.address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+	client := pb.NewBackendClient(conn)
+
+	// The healthcheck call shouldn't take long time
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	res, err := client.GetMetrics(ctx, &pb.HealthMessage{})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 func (c *Client) HealthCheck(ctx context.Context) (bool, error) {
 	if !c.parallel {
 		c.opMutex.Lock()

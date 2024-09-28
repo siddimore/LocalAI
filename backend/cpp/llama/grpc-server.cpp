@@ -441,6 +441,16 @@ struct llama_server_context
         }
     }
 
+    llama_client_slot* get_active_slot() {
+        for (llama_client_slot& slot : slots) {
+            // Check if the slot is currently processing
+            if (slot.is_processing()) {
+                return &slot;  // Return the active slot
+            }
+        }
+        return nullptr;  // No active slot found
+    }
+
     bool load_model(const gpt_params &params_)
     {
         params = params_;
@@ -2031,9 +2041,10 @@ inline void signal_handler(int signal) { shutdown_handler(signal); }
 bool loaded_model; // TODO: add a mutex for this, but happens only once loading the model
 
 // The class has a llama instance that is shared across all RPCs
-llama_server_context llama;
+static llama_server_context llama;
 
 static void start_llama_server() {
+
     // Wait for model to be loaded first
     while (!loaded_model) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -2420,6 +2431,27 @@ public:
 
         return grpc::Status::OK;
     }
+
+    grpc::Status GetMetrics(ServerContext* context, const backend::HealthMessage* request, backend::MetricsResponse* response) {
+        llama_client_slot* active_slot = llama.get_active_slot();
+
+        if (active_slot != nullptr) {
+            // Calculate the tokens per second using existing logic
+            double tokens_per_second = 1e3 / active_slot->t_token_generation * active_slot->n_decoded;
+
+            // Populate the response with metrics
+            response->set_tokens_per_second(tokens_per_second);
+            response->set_tokens_generated(active_slot->n_decoded);
+            response->set_prompt_tokens_processed(active_slot->num_prompt_tokens_processed);
+        } else {
+            // Handle case when no active slot exists
+            response->set_tokens_per_second(0);
+            response->set_tokens_generated(0);
+            response->set_prompt_tokens_processed(0);
+        }
+
+        return grpc::Status::OK;
+    } 
 };
 
 void RunServer(const std::string& server_address) {
